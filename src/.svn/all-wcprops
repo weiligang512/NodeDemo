@@ -1,0 +1,89 @@
+K 25
+svn:wc:ra_dav:version-url
+V 134
+/svn/%E4%BB%A3%E7%A0%81/!svn/ver/18/%E6%99%BA%E8%83%BD%E5%AE%B6%E5%B1%85/%E4%B8%8B%E4%BD%8D%E6%9C%BA/%E8%8A%82%E7%82%B9/trunk/DEMO/src
+END
+delay.c
+K 25
+svn:wc:ra_dav:version-url
+V 142
+/svn/%E4%BB%A3%E7%A0%81/!svn/ver/13/%E6%99%BA%E8%83%BD%E5%AE%B6%E5%B1%85/%E4%B8%8B%E4%BD%8D%E6%9C%BA/%E8%8A%82%E7%82%B9/trunk/DEMO/src/delay.c
+END
+irda.c
+K 25
+svn:wc:ra_dav:version-url
+V 141
+/svn/%E4%BB%A3%E7%A0%81/!svn/ver/13/%E6%99%BA%E8%83%BD%E5%AE%B6%E5%B1%85/%E4%B8%8B%E4%BD%8D%E6%9C%BA/%E8%8A%82%E7%82%B9/trunk/DEMO/src/irda.c
+END
+control.c
+K 25
+svn:wc:ra_dav:version-url
+V 144
+/svn/%E4%BB%A3%E7%A0%81/!svn/ver/17/%E6%99%BA%E8%83%BD%E5%AE%B6%E5%B1%85/%E4%B8%8B%E4%BD%8D%E6%9C%BA/%E8%8A%82%E7%82%B9/trunk/DEMO/src/control.c
+END
+DHT11.c
+K 25
+svn:wc:ra_dav:version-url
+V 142
+/svn/%E4%BB%A3%E7%A0%81/!svn/ver/13/%E6%99%BA%E8%83%BD%E5%AE%B6%E5%B1%85/%E4%B8%8B%E4%BD%8D%E6%9C%BA/%E8%8A%82%E7%82%B9/trunk/DEMO/src/DHT11.c
+END
+main.c
+K 25
+svn:wc:ra_dav:version-url
+V 141
+/svn/%E4%BB%A3%E7%A0%81/!svn/ver/17/%E6%99%BA%E8%83%BD%E5%AE%B6%E5%B1%85/%E4%B8%8B%E4%BD%8D%E6%9C%BA/%E8%8A%82%E7%82%B9/trunk/DEMO/src/main.c
+END
+STARTUP.A51
+K 25
+svn:wc:ra_dav:version-url
+V 146
+/svn/%E4%BB%A3%E7%A0%81/!svn/ver/13/%E6%99%BA%E8%83%BD%E5%AE%B6%E5%B1%85/%E4%B8%8B%E4%BD%8D%E6%9C%BA/%E8%8A%82%E7%82%B9/trunk/DEMO/src/STARTUP.A51
+END
+ADC.c
+K 25
+svn:wc:ra_dav:version-url
+V 140
+/svn/%E4%BB%A3%E7%A0%81/!svn/ver/18/%E6%99%BA%E8%83%BD%E5%AE%B6%E5%B1%85/%E4%B8%8B%E4%BD%8D%E6%9C%BA/%E8%8A%82%E7%82%B9/trunk/DEMO/src/ADC.c
+END
+EEPROM.c
+K 25
+svn:wc:ra_dav:version-url
+V 143
+/svn/%E4%BB%A3%E7%A0%81/!svn/ver/13/%E6%99%BA%E8%83%BD%E5%AE%B6%E5%B1%85/%E4%B8%8B%E4%BD%8D%E6%9C%BA/%E8%8A%82%E7%82%B9/trunk/DEMO/src/EEPROM.c
+END
+cpu.c
+K 25
+svn:wc:ra_dav:version-url
+V 140
+/svn/%E4%BB%A3%E7%A0%81/!svn/ver/17/%E6%99%BA%E8%83%BD%E5%AE%B6%E5%B1%85/%E4%B8%8B%E4%BD%8D%E6%9C%BA/%E8%8A%82%E7%82%B9/trunk/DEMO/src/cpu.c
+END
+1602.c
+K 25
+svn:wc:ra_dav:version-url
+V 141
+/svn/%E4%BB%A3%E7%A0%81/!svn/ver/13/%E6%99%BA%E8%83%BD%E5%AE%B6%E5%B1%85/%E4%B8%8B%E4%BD%8D%E6%9C%BA/%E8%8A%82%E7%82%B9/trunk/DEMO/src/1602.c
+END
+comm.c
+K 25
+svn:wc:ra_dav:version-url
+V 141
+/svn/%E4%BB%A3%E7%A0%81/!svn/ver/17/%E6%99%BA%E8%83%BD%E5%AE%B6%E5%B1%85/%E4%B8%8B%E4%BD%8D%E6%9C%BA/%E8%8A%82%E7%82%B9/trunk/DEMO/src/comm.c
+END
+uart.c
+K 25
+svn:wc:ra_dav:version-url
+V 141
+/svn/%E4%BB%A3%E7%A0%81/!svn/ver/17/%E6%99%BA%E8%83%BD%E5%AE%B6%E5%B1%85/%E4%B8%8B%E4%BD%8D%E6%9C%BA/%E8%8A%82%E7%82%B9/trunk/DEMO/src/uart.c
+END
+ds1302.c
+K 25
+svn:wc:ra_dav:version-url
+V 143
+/svn/%E4%BB%A3%E7%A0%81/!svn/ver/13/%E6%99%BA%E8%83%BD%E5%AE%B6%E5%B1%85/%E4%B8%8B%E4%BD%8D%E6%9C%BA/%E8%8A%82%E7%82%B9/trunk/DEMO/src/ds1302.c
+END
+1602.h
+K 25
+svn:wc:ra_dav:version-url
+V 141
+/svn/%E4%BB%A3%E7%A0%81/!svn/ver/13/%E6%99%BA%E8%83%BD%E5%AE%B6%E5%B1%85/%E4%B8%8B%E4%BD%8D%E6%9C%BA/%E8%8A%82%E7%82%B9/trunk/DEMO/src/1602.h
+END

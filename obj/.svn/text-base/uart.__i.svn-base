@@ -1,0 +1,1 @@
+"src\uart.c" WARNINGLEVEL (0) BROWSE INCDIR(.\inc) DEBUG OBJECTEXTEND PRINT(.\list\uart.lst) OBJECT(.\obj\uart.obj)

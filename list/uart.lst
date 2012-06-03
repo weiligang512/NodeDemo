@@ -1,0 +1,166 @@
+C51 COMPILER V9.01   UART                                                                  06/02/2012 16:41:10 PAGE 1   
+
+
+C51 COMPILER V9.01, COMPILATION OF MODULE UART
+OBJECT MODULE PLACED IN .\obj\uart.obj
+COMPILER INVOKED BY: C:\Keil\C51\BIN\C51.EXE src\uart.c WARNINGLEVEL(0) BROWSE INCDIR(.\inc) DEBUG OBJECTEXTEND PRINT(.\
+                    -list\uart.lst) OBJECT(.\obj\uart.obj)
+
+line level    source
+
+   1          /*stc89c52 MCU
+   2          * 晶振 ：11.0592MHz
+   3          * 波特率 ：9600
+   4          * 通讯方式 ：N81
+   5          */
+   6          
+   7          
+   8          #include "STC_NEW_8051.H"
+   9          #include "type.h"
+  10          #include "uart.h"
+  11          #include "cpu.h"
+  12          
+  13          
+  14                  
+  15          
+  16          static int8 code HexA_F[] = "ABCDEF";
+  17          
+  18          
+  19          static int8 *itoa(int8 *Buff, uint16 Data)
+  20          {
+  21   1              Buff[4] = Data % 10 + '0';
+  22   1              Buff[3] = (Data % 100) / 10     + '0';
+  23   1              Buff[2] = (Data % 1000) / 100 + '0';
+  24   1              Buff[1] = (Data % 10000) / 1000 + '0';
+  25   1              Buff[0] = (Data % 100000) / 10000 + '0';
+  26   1              Buff[5] = 0;
+  27   1      
+  28   1              return Buff;
+  29   1      }
+  30          
+  31          static int8 *itox(int8 *Buff, uint16 Data)
+  32          {
+  33   1              int8 i;
+  34   1      
+  35   1              Buff[0] = '0';
+  36   1              Buff[1] = 'X';
+  37   1              for (i = 0; i < 4; i++)
+  38   1              {
+  39   2                      Buff[i+2] = (Data % (0x10000 >> i*4)) / (0x10000 >> (i+1)*4) + '0';
+  40   2                      if (Buff[i+2] >= 10 + '0')
+  41   2                      {
+  42   3                              Buff[i+2] = HexA_F[Buff[i+2] - 10 - '0'];       
+  43   3                      }
+  44   2              }
+  45   1              Buff[i+2] = 0;
+  46   1      }
+  47          
+  48          #if !USER485    //使用RS232
+              void prints(int8 *s)
+              {
+                      while (*s)
+                      {
+                              stc_uart_sendbyte(*s++);
+                      }
+C51 COMPILER V9.01   UART                                                                  06/02/2012 16:41:10 PAGE 2   
+
+              }
+              
+              void Puts(int8 *s, uint8 len)
+              {
+                      while (len--)
+                      {
+                              stc_uart_sendbyte(*s++);
+                      }
+              }
+              
+              void printi(uint16 Data, int8 f)
+              {
+                      int8 data buff[8];
+                      
+                      switch (f)
+                      {
+                              case 10 :
+                                      itoa(buff, Data);
+                                      prints(buff);
+                              break;
+                              
+                              case 16 :
+                                      itox(buff, Data);
+                                      prints(buff);
+                              break;
+                              
+                              default :
+                              break;          
+                      }
+              }
+              #endif
+  86          
+  87          #if USER485                                      //定义了使用RS485
+  88          void RS485SendByte(int8 Data)
+  89          {
+  90   1              RS485TxENABLE
+  91   1              stc_uart_sendbyte(Data);
+  92   1              RS485RxENABLE   
+  93   1      }
+  94          
+  95          int8 RS485ReciveByte(void)
+  96          {
+  97   1              RS485RxENABLE
+  98   1              stc_uart_getbyte();
+  99   1      }
+ 100          
+ 101          
+ 102          void Puts485(int8 *s, uint8 len)
+ 103          {
+ 104   1              while (len--)
+ 105   1              {
+ 106   2                      RS485SendByte(*s++);
+ 107   2              }
+ 108   1      }
+ 109          
+ 110          void prints485(int8 *s)
+ 111          {
+ 112   1              while (*s)
+ 113   1              {
+ 114   2                      RS485SendByte(*s++);
+ 115   2              }
+ 116   1      }
+C51 COMPILER V9.01   UART                                                                  06/02/2012 16:41:10 PAGE 3   
+
+ 117          
+ 118          void printi485(uint16 Data, int8 f)
+ 119          {
+ 120   1              int8 data buff[8];
+ 121   1              
+ 122   1              switch (f)
+ 123   1              {
+ 124   2                      case 10 :
+ 125   2                              itoa(buff, Data);
+ 126   2                              prints485(buff);
+ 127   2                      break;
+ 128   2                      
+ 129   2                      case 16 :
+ 130   2                              itox(buff, Data);
+ 131   2                              prints485(buff);
+ 132   2                      break;
+ 133   2                      
+ 134   2                      default :
+ 135   2                      break;          
+ 136   2              }
+ 137   1      }
+ 138          #endif
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    589    ----
+   CONSTANT SIZE    =      7    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----      28
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

@@ -1,0 +1,269 @@
+C51 COMPILER V9.01   IRDA                                                                  05/20/2012 23:29:37 PAGE 1   
+
+
+C51 COMPILER V9.01, COMPILATION OF MODULE IRDA
+OBJECT MODULE PLACED IN .\obj\irda.obj
+COMPILER INVOKED BY: C:\Keil\C51\BIN\C51.EXE src\irda.c WARNINGLEVEL(0) BROWSE INCDIR(.\inc) DEBUG OBJECTEXTEND PRINT(.\
+                    -list\irda.lst) OBJECT(.\obj\irda.obj)
+
+line level    source
+
+   1          /*stc12c5A60s2 MCU
+   2          * 晶振 ：11.0592MHz
+   3          */
+   4          
+   5          #include "STC_NEW_8051.H"
+   6          #include <intrins.h>
+   7          #include "type.h"
+   8          #include "irda.h"
+   9          #include "uart.h"
+  10          #include "cpu.h"
+  11          #include "delay.h"
+  12          
+  13          
+  14          volatile IIrData_Typ xdata IIrData = {0};
+  15          volatile uint16 data SysBase = 0;
+  16          volatile uint16 data SysCount = 0;
+  17          volatile bit IRFlag = 0;
+  18          
+  19          void IrGetData(IrData_Typ *IrData)
+  20          {
+  21   1              int8 i, j;
+  22   1      
+  23   1              for (i = 0; i < 4; i++)
+  24   1              {
+  25   2                      for (j = 0; j < 8; j++)
+  26   2                      {
+  27   3                              //11.0592M晶振，PCA计数时钟为系统时钟1/12
+  28   3                              //921个脉冲为1ms，516个脉冲为0.56ms      ，1556个脉冲为1.69ms
+  29   3                              //0.56ms+0.56ms 表示0
+  30   3                              if ((IIrData.uiIrData[i*16+j*2] >= 480 && IIrData.uiIrData[i*16+j*2] <= 680) && \
+  31   3                                      (IIrData.uiIrData[i*16+j*2+1] >= 480 && IIrData.uiIrData[i*16+j*2+1] <= 600)) //1.12ms 0
+  32   3                              {
+  33   4                                      IrData->IrData.ucIrData[i] >>= 1;       
+  34   4                              }
+  35   3                              //0.56+1.69ms 表示1
+  36   3                              if ((IIrData.uiIrData[i*16+j*2] >= 480 && IIrData.uiIrData[i*16+j*2] <= 680) && \
+  37   3                                      (IIrData.uiIrData[i*16+j*2+1] >= 1450 && IIrData.uiIrData[i*16+j*2+1] <= 1600)) //1.12ms 0
+  38   3                              {
+  39   4                                      IrData->IrData.ucIrData[i] >>= 1;
+  40   4                                      IrData->IrData.ucIrData[i] |= (0x80);   
+  41   4                              }   
+  42   3                      }
+  43   2              }
+  44   1              IrData->IrData.ucIrData[i] = 0x02; 
+  45   1      
+  46   1              for (i = 0; i < 4; i++)
+  47   1              {
+  48   2                      for (j = 0; j < 8; j++)
+  49   2                      {
+  50   3                              //11.0592M晶振，PCA计数时钟为系统时钟1/12
+  51   3                              //921个脉冲为1ms，516个脉冲为0.56ms      ，1556个脉冲为1.69ms
+  52   3                              //0.56ms+0.56ms 表示0
+  53   3                              if ((IIrData.uiIrData[72+i*16+j*2] >= 480 && IIrData.uiIrData[72+i*16+j*2] <= 680) && \
+  54   3                                      (IIrData.uiIrData[72+i*16+j*2+1] >= 480 && IIrData.uiIrData[72+i*16+j*2+1] <= 600)) //1.12ms 0
+C51 COMPILER V9.01   IRDA                                                                  05/20/2012 23:29:37 PAGE 2   
+
+  55   3                              {
+  56   4                                      IrData->IrData.ucIrData[5+i] >>= 1;     
+  57   4                              }
+  58   3                              //0.56+1.69ms 表示1
+  59   3                              if ((IIrData.uiIrData[72+i*16+j*2] >= 480 && IIrData.uiIrData[72+i*16+j*2] <= 680) && \
+  60   3                                      (IIrData.uiIrData[72+i*16+j*2+1] >= 1450 && IIrData.uiIrData[72+i*16+j*2+1] <= 1600)) //1.12ms 0
+  61   3                              {
+  62   4                                      IrData->IrData.ucIrData[5+i] >>= 1;
+  63   4                                      IrData->IrData.ucIrData[5+i] |= (0x80); 
+  64   4                              }   
+  65   3                      }
+  66   2              }
+  67   1      }
+  68          
+  69          
+  70          #if 1
+  71          //发送引导码，9ms
+  72          static void IrSendHeard(void)
+  73          {
+  74   1              ENABLEPOT;
+  75   1              Delay100us(12);
+  76   1              Delay5us(1);
+  77   1              IR = 1;
+  78   1              IR = 1;
+  79   1              DISABLEPOT;
+  80   1              Delay100us(43);
+  81   1              Delay10us(5);
+  82   1      }
+  83          
+  84          static void IrSendEnd(void)
+  85          {
+  86   1              ENABLEPOT;
+  87   1              Delay100us(0);
+  88   1              Delay10us(3);
+  89   1              IR = 1;
+  90   1              _nop_();
+  91   1              _nop_();
+  92   1              _nop_();
+  93   1              _nop_();
+  94   1              _nop_();
+  95   1              _nop_();
+  96   1              _nop_();
+  97   1              _nop_();
+  98   1              _nop_();
+  99   1              _nop_();
+ 100   1              _nop_();
+ 101   1              DISABLEPOT;
+ 102   1      }
+ 103          
+ 104          static void IrSendByte(uint8 Data)
+ 105          {
+ 106   1              int8 i, t;
+ 107   1      
+ 108   1              for (i = 0; i < 8; i++)
+ 109   1              {
+ 110   2                      ENABLEPOT;
+ 111   2              //      Delay100us(0);
+ 112   2                      Delay10us(3);
+ 113   2                      Delay5us(0);
+ 114   2                      Delay5us(0);
+ 115   2                      IR = 1;
+ 116   2                      _nop_();
+C51 COMPILER V9.01   IRDA                                                                  05/20/2012 23:29:37 PAGE 3   
+
+ 117   2                      _nop_();
+ 118   2                      _nop_();
+ 119   2                      _nop_();
+ 120   2                      _nop_();
+ 121   2                      _nop_();
+ 122   2                      _nop_();
+ 123   2                      _nop_();
+ 124   2                      _nop_();
+ 125   2                      _nop_();
+ 126   2                      _nop_();
+ 127   2                      DISABLEPOT;
+ 128   2                      ((Data >> i) & 0x01) ? (t=15) : (t = 4);
+ 129   2                      Delay100us(t);
+ 130   2                      Delay10us(5);
+ 131   2              } 
+ 132   1      }
+ 133          
+ 134          #if 0
+              void IrSendRepeat(void)
+              {
+                      ENABLEPOT;
+                      Delay100us(90);
+                      DISABLEPOT;
+                      Delay100us(23); 
+              }
+              #endif
+ 143          
+ 144          void IrSend20ms(uint8 Data)
+ 145          {
+ 146   1              int8 i, t;
+ 147   1      
+ 148   1              for (i = 0; i < 3; i++)
+ 149   1              {
+ 150   2                      ENABLEPOT;
+ 151   2              //      Delay100us(0);
+ 152   2                      Delay10us(3);
+ 153   2                      Delay5us(0);
+ 154   2                      Delay5us(0);
+ 155   2                      IR = 1;
+ 156   2                      _nop_();
+ 157   2                      _nop_();
+ 158   2                      _nop_();
+ 159   2                      _nop_();
+ 160   2                      _nop_();
+ 161   2                      _nop_();
+ 162   2                      _nop_();
+ 163   2                      _nop_();
+ 164   2                      _nop_();
+ 165   2                      DISABLEPOT;
+ 166   2                      ((Data >> i) & 0x01) ? (t=15) : (t = 4);
+ 167   2                      Delay100us(t);
+ 168   2                      Delay10us(5);
+ 169   2              }
+ 170   1              ENABLEPOT; 
+ 171   1      //      Delay100us(0);
+ 172   1              Delay10us(3);
+ 173   1              Delay5us(0);
+ 174   1              Delay5us(0);
+ 175   1              IR = 1;
+ 176   1              _nop_();
+ 177   1              _nop_();
+ 178   1              _nop_();
+C51 COMPILER V9.01   IRDA                                                                  05/20/2012 23:29:37 PAGE 4   
+
+ 179   1              _nop_();
+ 180   1              _nop_();
+ 181   1              _nop_();
+ 182   1              _nop_();
+ 183   1              _nop_();
+ 184   1              _nop_();
+ 185   1              _nop_();
+ 186   1              DISABLEPOT;
+ 187   1              Delay100us(197);
+ 188   1              Delay100us(1);  
+ 189   1      }
+ 190          
+ 191          void IrSendFrame(uint8 *Data)
+ 192          {
+ 193   1              uint8 i;
+ 194   1      
+ 195   1              DISABLEPCA0
+ 196   1              ENABLEPOT
+ 197   1              ET0 = 0;
+ 198   1              IrSendHeard();
+ 199   1      
+ 200   1              for (i = 0; i < 9; i++)
+ 201   1              {
+ 202   2                      if (i == 4)
+ 203   2                      {
+ 204   3                              IrSend20ms(Data[i]&0x07);
+ 205   3                              continue;
+ 206   3                      }
+ 207   2                      IrSendByte(Data[i]);
+ 208   2              }
+ 209   1              IrSendEnd();
+ 210   1              ET0 = 1;
+ 211   1              DISABLEPOT
+ 212   1              ENABLEPCA0
+ 213   1              IR = 1; 
+ 214   1      }
+ 215          #endif
+ 216          
+ 217          /*****************************************************************
+ 218          *FunctionName   : IrDeviceSend(uint8 *Data)
+ 219          *Description    : 对相应的红外设备发码
+ 220          *EntryParameter : Data[0]:设备类型，Data[1-9]:红外数据码
+ 221          *ReturnValue    : None
+ 222          *****************************************************************/
+ 223          void IrDeviceSend(uint8 *Data)
+ 224          {
+ 225   1              switch (Data[0])
+ 226   1              {
+ 227   2                      case GREE_YB0F2: 
+ 228   2                              IrSendFrame(&Data[1]);          
+ 229   2                      break;
+ 230   2      
+ 231   2                      //其他设备......
+ 232   2                      default :
+ 233   2                      break;
+ 234   2              }
+ 235   1      }
+ 236          
+ 237          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+C51 COMPILER V9.01   IRDA                                                                  05/20/2012 23:29:37 PAGE 5   
+
+   CODE SIZE        =   1440    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =    285    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      4      15
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      1    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

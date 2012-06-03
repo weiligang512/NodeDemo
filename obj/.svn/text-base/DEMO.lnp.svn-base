@@ -1,0 +1,15 @@
+".\obj\main.obj",
+".\obj\delay.obj",
+".\obj\cpu.obj",
+".\obj\comm.obj",
+".\obj\control.obj",
+".\obj\STARTUP.obj",
+".\obj\1602.obj",
+".\obj\DHT11.obj",
+".\obj\ds1302.obj",
+".\obj\uart.obj",
+".\obj\irda.obj",
+".\obj\EEPROM.obj",
+".\obj\ADC.obj" 
+TO ".\obj\DEMO" 
+PRINT(".\list\DEMO.m51") RAMSIZE(256) 

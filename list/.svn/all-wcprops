@@ -1,0 +1,95 @@
+K 25
+svn:wc:ra_dav:version-url
+V 135
+/svn/%E4%BB%A3%E7%A0%81/!svn/ver/18/%E6%99%BA%E8%83%BD%E5%AE%B6%E5%B1%85/%E4%B8%8B%E4%BD%8D%E6%9C%BA/%E8%8A%82%E7%82%B9/trunk/DEMO/list
+END
+irda.lst
+K 25
+svn:wc:ra_dav:version-url
+V 144
+/svn/%E4%BB%A3%E7%A0%81/!svn/ver/17/%E6%99%BA%E8%83%BD%E5%AE%B6%E5%B1%85/%E4%B8%8B%E4%BD%8D%E6%9C%BA/%E8%8A%82%E7%82%B9/trunk/DEMO/list/irda.lst
+END
+control.lst
+K 25
+svn:wc:ra_dav:version-url
+V 147
+/svn/%E4%BB%A3%E7%A0%81/!svn/ver/17/%E6%99%BA%E8%83%BD%E5%AE%B6%E5%B1%85/%E4%B8%8B%E4%BD%8D%E6%9C%BA/%E8%8A%82%E7%82%B9/trunk/DEMO/list/control.lst
+END
+DHT11.lst
+K 25
+svn:wc:ra_dav:version-url
+V 145
+/svn/%E4%BB%A3%E7%A0%81/!svn/ver/17/%E6%99%BA%E8%83%BD%E5%AE%B6%E5%B1%85/%E4%B8%8B%E4%BD%8D%E6%9C%BA/%E8%8A%82%E7%82%B9/trunk/DEMO/list/DHT11.lst
+END
+main.lst
+K 25
+svn:wc:ra_dav:version-url
+V 144
+/svn/%E4%BB%A3%E7%A0%81/!svn/ver/17/%E6%99%BA%E8%83%BD%E5%AE%B6%E5%B1%85/%E4%B8%8B%E4%BD%8D%E6%9C%BA/%E8%8A%82%E7%82%B9/trunk/DEMO/list/main.lst
+END
+DEMO.m51
+K 25
+svn:wc:ra_dav:version-url
+V 144
+/svn/%E4%BB%A3%E7%A0%81/!svn/ver/18/%E6%99%BA%E8%83%BD%E5%AE%B6%E5%B1%85/%E4%B8%8B%E4%BD%8D%E6%9C%BA/%E8%8A%82%E7%82%B9/trunk/DEMO/list/DEMO.m51
+END
+cpu.lst
+K 25
+svn:wc:ra_dav:version-url
+V 143
+/svn/%E4%BB%A3%E7%A0%81/!svn/ver/17/%E6%99%BA%E8%83%BD%E5%AE%B6%E5%B1%85/%E4%B8%8B%E4%BD%8D%E6%9C%BA/%E8%8A%82%E7%82%B9/trunk/DEMO/list/cpu.lst
+END
+EEPROM.lst
+K 25
+svn:wc:ra_dav:version-url
+V 146
+/svn/%E4%BB%A3%E7%A0%81/!svn/ver/17/%E6%99%BA%E8%83%BD%E5%AE%B6%E5%B1%85/%E4%B8%8B%E4%BD%8D%E6%9C%BA/%E8%8A%82%E7%82%B9/trunk/DEMO/list/EEPROM.lst
+END
+ADC.lst
+K 25
+svn:wc:ra_dav:version-url
+V 143
+/svn/%E4%BB%A3%E7%A0%81/!svn/ver/18/%E6%99%BA%E8%83%BD%E5%AE%B6%E5%B1%85/%E4%B8%8B%E4%BD%8D%E6%9C%BA/%E8%8A%82%E7%82%B9/trunk/DEMO/list/ADC.lst
+END
+1602.lst
+K 25
+svn:wc:ra_dav:version-url
+V 144
+/svn/%E4%BB%A3%E7%A0%81/!svn/ver/17/%E6%99%BA%E8%83%BD%E5%AE%B6%E5%B1%85/%E4%B8%8B%E4%BD%8D%E6%9C%BA/%E8%8A%82%E7%82%B9/trunk/DEMO/list/1602.lst
+END
+comm.lst
+K 25
+svn:wc:ra_dav:version-url
+V 144
+/svn/%E4%BB%A3%E7%A0%81/!svn/ver/17/%E6%99%BA%E8%83%BD%E5%AE%B6%E5%B1%85/%E4%B8%8B%E4%BD%8D%E6%9C%BA/%E8%8A%82%E7%82%B9/trunk/DEMO/list/comm.lst
+END
+delay.lst
+K 25
+svn:wc:ra_dav:version-url
+V 145
+/svn/%E4%BB%A3%E7%A0%81/!svn/ver/17/%E6%99%BA%E8%83%BD%E5%AE%B6%E5%B1%85/%E4%B8%8B%E4%BD%8D%E6%9C%BA/%E8%8A%82%E7%82%B9/trunk/DEMO/list/delay.lst
+END
+STARTUP.lst
+K 25
+svn:wc:ra_dav:version-url
+V 147
+/svn/%E4%BB%A3%E7%A0%81/!svn/ver/17/%E6%99%BA%E8%83%BD%E5%AE%B6%E5%B1%85/%E4%B8%8B%E4%BD%8D%E6%9C%BA/%E8%8A%82%E7%82%B9/trunk/DEMO/list/STARTUP.lst
+END
+uart.m51
+K 25
+svn:wc:ra_dav:version-url
+V 144
+/svn/%E4%BB%A3%E7%A0%81/!svn/ver/13/%E6%99%BA%E8%83%BD%E5%AE%B6%E5%B1%85/%E4%B8%8B%E4%BD%8D%E6%9C%BA/%E8%8A%82%E7%82%B9/trunk/DEMO/list/uart.m51
+END
+uart.lst
+K 25
+svn:wc:ra_dav:version-url
+V 144
+/svn/%E4%BB%A3%E7%A0%81/!svn/ver/17/%E6%99%BA%E8%83%BD%E5%AE%B6%E5%B1%85/%E4%B8%8B%E4%BD%8D%E6%9C%BA/%E8%8A%82%E7%82%B9/trunk/DEMO/list/uart.lst
+END
+ds1302.lst
+K 25
+svn:wc:ra_dav:version-url
+V 146
+/svn/%E4%BB%A3%E7%A0%81/!svn/ver/17/%E6%99%BA%E8%83%BD%E5%AE%B6%E5%B1%85/%E4%B8%8B%E4%BD%8D%E6%9C%BA/%E8%8A%82%E7%82%B9/trunk/DEMO/list/ds1302.lst
+END

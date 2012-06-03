@@ -1,0 +1,1 @@
+"src\cpu.c" WARNINGLEVEL (0) BROWSE INCDIR(.\inc) DEBUG OBJECTEXTEND PRINT(.\list\cpu.lst) OBJECT(.\obj\cpu.obj)

@@ -1,0 +1,78 @@
+C51 COMPILER V9.01   1602                                                                  05/20/2012 21:50:08 PAGE 1   
+
+
+C51 COMPILER V9.01, COMPILATION OF MODULE 1602
+OBJECT MODULE PLACED IN .\obj\1602.obj
+COMPILER INVOKED BY: C:\Keil\C51\BIN\C51.EXE src\1602.c WARNINGLEVEL(0) BROWSE INCDIR(.\inc) DEBUG OBJECTEXTEND PRINT(.\
+                    -list\1602.lst) OBJECT(.\obj\1602.obj)
+
+line level    source
+
+   1          #include "STC_NEW_8051.H"
+   2          #include "type.h"
+   3          #include <intrins.h>
+   4          #include "1602.h"
+   5          
+   6          
+   7          void delay_1ms(unsigned int t) //延时0.5MS
+   8          {
+   9   1              unsigned int i;
+  10   1              while(t--)
+  11   1              {
+  12   2                      for(i=0;i<60;i++);
+  13   2              }               
+  14   1      }
+  15          
+  16          void LCD_wbyt(unsigned char dat,unsigned char SR)  //SR=0写指令,SR=1写数据 
+  17          {
+  18   1              EN=0;
+  19   1              RS=SR;
+  20   1              RW=0;
+  21   1              LCD=dat;
+  22   1              delay_1ms(5);
+  23   1              EN=1;
+  24   1              delay_1ms(10);
+  25   1              EN=0;
+  26   1      }
+  27          
+  28          void LCD_init(void)  //LCD初始化
+  29          {
+  30   1              delay_1ms(30);
+  31   1              LCD_wbyt(0x38,0);
+  32   1              delay_1ms(10);
+  33   1              LCD_wbyt(0x38,0);
+  34   1              delay_1ms(10);
+  35   1              LCD_wbyt(0x38,0);
+  36   1              LCD_wbyt(0x38,0);
+  37   1              LCD_wbyt(0x08,0);
+  38   1              LCD_wbyt(0x01,0);
+  39   1              LCD_wbyt(0x06,0);
+  40   1              LCD_wbyt(0x0c,0);
+  41   1      }
+  42          
+  43          void LCD_disp(unsigned char *p,unsigned char row)//LCD显示
+  44          {
+  45   1              unsigned char i;
+  46   1      
+  47   1              LCD_wbyt(0x80+0x40*(row & 0x01),0);
+  48   1              while (*p)
+  49   1              {
+  50   2                      LCD_wbyt(*p++, 1);
+  51   2              }
+  52   1      }
+
+
+C51 COMPILER V9.01   1602                                                                  05/20/2012 21:50:08 PAGE 2   
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    166    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----       4
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

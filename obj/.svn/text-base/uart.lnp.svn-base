@@ -1,0 +1,10 @@
+".\obj\main.obj",
+".\obj\uart.obj",
+".\obj\delay.obj",
+".\obj\cpu.obj",
+".\obj\irda.obj",
+".\obj\1602.obj",
+".\obj\ds1302.obj",
+".\obj\DHT11.obj" 
+TO ".\obj\uart" 
+PRINT(".\list\uart.m51") RAMSIZE(256) 

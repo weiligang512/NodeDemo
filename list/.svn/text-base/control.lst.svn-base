@@ -1,0 +1,204 @@
+C51 COMPILER V9.01   CONTROL                                                               05/20/2012 23:29:36 PAGE 1   
+
+
+C51 COMPILER V9.01, COMPILATION OF MODULE CONTROL
+OBJECT MODULE PLACED IN .\obj\control.obj
+COMPILER INVOKED BY: C:\Keil\C51\BIN\C51.EXE src\control.c WARNINGLEVEL(0) BROWSE INCDIR(.\inc) DEBUG OBJECTEXTEND PRINT
+                    -(.\list\control.lst) OBJECT(.\obj\control.obj)
+
+line level    source
+
+   1          #include "STC_NEW_8051.H"
+   2          #include "type.h"
+   3          #include "config.h"
+   4          #include "control.h"
+   5          #include "uart.h"
+   6          #include "delay.h"
+   7          #include "cpu.h"
+   8          #include "irda.h"
+   9          #include "1602.h"
+  10          #include "ds1302.h"
+  11          #include "DHT11.h"
+  12          #include "comm.h"
+  13          
+  14          
+  15          SysParameter_Tyep SysParatmeter;        //系统参数结构
+  16          SysErrorCode_Type SysErrorCode;         //系统错误代码
+  17          
+  18          /*****************************************************************
+  19          *FunctionName   : SysparameterInit()
+  20          *Description    : System Parameter Initialize
+  21          *EntryParameter : None
+  22          *ReturnValue    : TRUE: 成功，FLASE：失败
+  23          *****************************************************************/
+  24          static bool SysParameterInit(void)
+  25          {
+  26   1              uint8 xdata TmpBuff[16];
+  27   1              uint8 xdata TmpBuff1[16];
+  28   1              uint8 Flag;
+  29   1              uint8 i;
+  30   1      
+  31   1              IAPRead(SYSBUFFFLAG, &Flag, 1);                  //Write Flag
+  32   1              if (0xf0 == Flag)                                                //上次设置参数断电或其他问题
+  33   1              {
+  34   2                      IAPRead(SYSPARAMETERBUFF, TmpBuff, SYSPARAMETERLEN);
+  35   2                      IAPProgram(SYSPARASTARTADDRESS, TmpBuff, SYSPARAMETERLEN);      // Store with Parameter
+  36   2                      Flag = 0x00;
+  37   2                      IAPProgram(SYSBUFFFLAG, &Flag, 1);                       //Write Flag
+  38   2                      IAPRead(SYSPARASTARTADDRESS, TmpBuff1, SYSPARAMETERLEN);         //读出原来的参数
+  39   2                      for (i = 0; i < SYSPARAMETERLEN; i++)                                   //校验一次
+  40   2                      {
+  41   3                              if (TmpBuff[i] != TmpBuff1[i])
+  42   3                              {
+  43   4                                      break;                                                                                  //校验失败
+  44   4                              }
+  45   3                      } 
+  46   2                      if (i != SYSPARAMETERLEN)
+  47   2                      {
+  48   3                              SysErrorCode = Sys_ParaError;                                     //系统参数代码为系统参数错误
+  49   3                              return FALSE;
+  50   3                      }               
+  51   2              }
+  52   1      
+  53   1              IAPRead(SYSUIDSTARTADDRESS, (uint8 *)&SysParatmeter.SysUID, SYSUIDADDRESSLEN); //读UID
+  54   1              if (SysParatmeter.SysUID == 0 || SysParatmeter.SysUID == 0xffff)
+C51 COMPILER V9.01   CONTROL                                                               05/20/2012 23:29:36 PAGE 2   
+
+  55   1              {
+  56   2                      SysParatmeter.SysUID = DEFAULTUID;
+  57   2              }
+  58   1      
+  59   1              IAPRead(SYSBAUDRATESTARTADDRESS, (uint8 *)&SysParatmeter.BaudRate, SYSBAUDRATEADDRESSLEN); //读波特率
+  60   1              if (SysParatmeter.BaudRate == 0 || SysParatmeter.BaudRate == 0xffff)
+  61   1              {
+  62   2                      SysParatmeter.BaudRate = DEFAULTBAUDRATE;               
+  63   2              }
+  64   1              SetBaudRate(SysParatmeter.BaudRate);    //更新波特率
+  65   1      
+  66   1              return TRUE;
+  67   1      }
+  68          
+  69          
+  70          /*****************************************************************
+  71          *FunctionName   : SetSysParameter(uint8 *Para)
+  72          *Description    : 设置系统参数，先将参数存储到EEPROM缓存，然后再更改
+  73          *EntryParameter : 系统参数 16字节
+  74          *ReturnValue    : TRUE：成功，FLASE：失败
+  75          *****************************************************************/
+  76          bool SetSysParameter(uint8 *Para)
+  77          {
+  78   1              uint8 TmpBuff[16];
+  79   1              uint8 WriteFlag = 0xf0;
+  80   1              uint8 i;
+  81   1      
+  82   1              IAPEraseSector(SYSPARAMETERBUFF);  //Erase System Parameter Buffer
+  83   1              IAPProgram(SYSPARAMETERBUFF, Para, SYSPARAMETERLEN);    //Store with Buffer
+  84   1              IAPProgram(SYSBUFFFLAG, &WriteFlag, 1);                  //Write Flag
+  85   1              IAPRead(SYSPARASTARTADDRESS, TmpBuff, SYSPARAMETERLEN);  //读出原来的参数
+  86   1              if (*(uint16 *)&Para[0] != 0)   //设置了UID
+  87   1              {
+  88   2                      TmpBuff[0] = Para[0];
+  89   2                      TmpBuff[1] = Para[1];   
+  90   2              }
+  91   1              if (*(uint16 *)&Para[2] != 0)  //设置了波特率
+  92   1              {
+  93   2                      TmpBuff[2] = Para[2];
+  94   2                      TmpBuff[3] = Para[3];   
+  95   2              }
+  96   1              //其他参数.........
+  97   1      
+  98   1              IAPEraseSector(SECTOR1_STARTADDRESS);  //Erase System Parameter
+  99   1              IAPProgram(SYSPARASTARTADDRESS, TmpBuff, SYSPARAMETERLEN);      // Store with Parameter
+ 100   1              WriteFlag = 0x00;
+ 101   1              IAPProgram(SYSBUFFFLAG, &WriteFlag, 1);                  //Write Flag
+ 102   1      
+ 103   1              IAPRead(SYSPARASTARTADDRESS, Para, SYSPARAMETERLEN);     //读出原来的参数
+ 104   1              for (i = 0; i < SYSPARAMETERLEN; i++)
+ 105   1              {
+ 106   2                      if (TmpBuff[i] != Para[i])
+ 107   2                      {
+ 108   3                              break;
+ 109   3                      }
+ 110   2              } 
+ 111   1              if (i == SYSPARAMETERLEN)
+ 112   1              {
+ 113   2                      return SysParameterInit();
+ 114   2              }
+ 115   1      
+ 116   1              return FALSE;   
+C51 COMPILER V9.01   CONTROL                                                               05/20/2012 23:29:36 PAGE 3   
+
+ 117   1      }
+ 118          
+ 119          
+ 120          /*****************************************************************
+ 121          *FunctionName   : SysInit()
+ 122          *Description    : 系统初始化
+ 123          *EntryParameter : None
+ 124          *ReturnValue    : TRUE：成功，FLASE：失败
+ 125          *****************************************************************/
+ 126          bool SysInit(void)
+ 127          {
+ 128   1              SysErrorCode = Sys_OK;
+ 129   1      
+ 130   1              SysParameterInit();
+ 131   1              DS1302_Initial();
+ 132   1              LCD_init();
+ 133   1              CPUInit();
+ 134   1              RS485RxENABLE   
+ 135   1      }
+ 136          
+ 137          #if !USER485
+              /*****************************************************************
+              *FunctionName   : DispSysPara()
+              *Description    : 串口显示系统参数
+              *EntryParameter : None
+              *ReturnValue    : None
+              *****************************************************************/
+              void DispSysPara(void)
+              {
+                      prints("System Start.....\r\n");
+                      prints("System UID: ");
+                      printi(SysParatmeter.SysUID, 10);
+                      prints("\r\n");
+                      prints("System Baud Rate: ");
+                      printi(SysParatmeter.BaudRate, 10);
+                      prints("\r\n");
+              }
+              #else
+ 155          /*****************************************************************
+ 156          *FunctionName   : DispSysPara484()
+ 157          *Description    : 串口485显示系统参数
+ 158          *EntryParameter : None
+ 159          *ReturnValue    : None
+ 160          *****************************************************************/
+ 161          void DispSysPara485(void)
+ 162          {
+ 163   1              prints485("System Start.....\r\n");
+ 164   1              prints485("System UID: ");
+ 165   1              printi485(SysParatmeter.SysUID, 10);
+ 166   1              prints485("\r\n");
+ 167   1              prints485("System Baud Rate: ");
+ 168   1              printi485(SysParatmeter.BaudRate, 10);
+ 169   1              prints485("\r\n");
+ 170   1      }
+ 171          #endif
+ 172          
+ 173          
+ 174          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    543    ----
+C51 COMPILER V9.01   CONTROL                                                               05/20/2012 23:29:36 PAGE 4   
+
+   CONSTANT SIZE    =     55    ----
+   XDATA SIZE       =   ----      32
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      5      21
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

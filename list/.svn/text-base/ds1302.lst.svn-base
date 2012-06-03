@@ -1,0 +1,224 @@
+C51 COMPILER V9.01   DS1302                                                                05/20/2012 21:50:09 PAGE 1   
+
+
+C51 COMPILER V9.01, COMPILATION OF MODULE DS1302
+OBJECT MODULE PLACED IN .\obj\ds1302.obj
+COMPILER INVOKED BY: C:\Keil\C51\BIN\C51.EXE src\ds1302.c WARNINGLEVEL(0) BROWSE INCDIR(.\inc) DEBUG OBJECTEXTEND PRINT(
+                    -.\list\ds1302.lst) OBJECT(.\obj\ds1302.obj)
+
+line level    source
+
+   1          #include "STC_NEW_8051.H"
+   2          #include <intrins.h>
+   3          #include "type.h"
+   4          
+   5          
+   6          sbit SCLK = P3^6;                   //DS1302时钟口P3.6
+   7          sbit IO = P3^4;                     //DS1302数据口P3.4
+   8          sbit RST = P3^5;                    //DS1302片选口P3.5
+   9          
+  10          
+  11          /**************************************
+  12          延时X微秒(STC12C5A60S2@12M)
+  13          不同的工作环境,需要调整此函数
+  14          此延时函数是使用1T的指令周期进行计算,与传统的12T的MCU不同
+  15          **************************************/
+  16          void Delay()
+  17          {
+  18   1          _nop_();
+  19   1          _nop_();
+  20   1      }
+  21          
+  22          /**************************************
+  23          从DS1302读1字节数据
+  24          **************************************/
+  25          uint8 DS1302_ReadByte()
+  26          {
+  27   1          uint8 i;
+  28   1          uint8 dat = 0;
+  29   1      
+  30   1          for (i=0; i<8; i++)             //8位计数器
+  31   1          {
+  32   2                      SCLK = 0;                   //时钟线拉低
+  33   2                      Delay();                //延时等待
+  34   2              dat >>= 1;                      //数据右移一位
+  35   2                      if (IO) dat |= 0x80;        //读取数据
+  36   2                      SCLK = 1;                   //时钟线拉高
+  37   2                      Delay();                //延时等待
+  38   2              }
+  39   1      
+  40   1          return dat;
+  41   1      }
+  42          
+  43          /**************************************
+  44          向DS1302写1字节数据
+  45          **************************************/
+  46          void DS1302_WriteByte(uint8 dat)
+  47          {
+  48   1          char i;
+  49   1      
+  50   1          for (i=0; i<8; i++)             //8位计数器
+  51   1          {
+  52   2              SCLK = 0;                   //时钟线拉低
+  53   2              Delay();                //延时等待
+  54   2              dat >>= 1;                  //移出数据
+C51 COMPILER V9.01   DS1302                                                                05/20/2012 21:50:09 PAGE 2   
+
+  55   2              IO = CY;                    //送出到端口
+  56   2              SCLK = 1;                   //时钟线拉高
+  57   2              Delay();                //延时等待
+  58   2          }
+  59   1      }
+  60          
+  61          /**************************************
+  62          读DS1302某地址的的数据
+  63          **************************************/
+  64          uint8 DS1302_ReadData(uint8 addr)
+  65          {
+  66   1          uint8 dat;
+  67   1      
+  68   1          RST = 0;
+  69   1          Delay();
+  70   1          SCLK = 0;
+  71   1          Delay();
+  72   1          RST = 1;
+  73   1          Delay();
+  74   1          DS1302_WriteByte(addr);         //写地址
+  75   1          dat = DS1302_ReadByte();        //读数据
+  76   1          SCLK = 1;
+  77   1          RST = 0;
+  78   1      
+  79   1          return dat;
+  80   1      }
+  81          
+  82          /**************************************
+  83          往DS1302的某个地址写入数据
+  84          **************************************/
+  85          void DS1302_WriteData(uint8 addr, uint8 dat)
+  86          {
+  87   1          RST = 0;
+  88   1          Delay();
+  89   1          SCLK = 0;
+  90   1          Delay();
+  91   1          RST = 1;
+  92   1          Delay();
+  93   1          DS1302_WriteByte(addr);         //写地址
+  94   1          DS1302_WriteByte(dat);          //写数据
+  95   1          SCLK = 1;
+  96   1          RST = 0;
+  97   1      }
+  98          
+  99          /**************************************
+ 100          写入初始时间
+ 101          **************************************/
+ 102          void DS1302_SetTime(uint8 *p)
+ 103          {
+ 104   1          uint8 addr = 0x80;
+ 105   1          uint8 n = 7;
+ 106   1      
+ 107   1              EA = 0;
+ 108   1          DS1302_WriteData(0x8e, 0x00);   //允许写操作
+ 109   1          while (n--)
+ 110   1          {
+ 111   2              DS1302_WriteData(addr, *p++);
+ 112   2              addr += 2;
+ 113   2          }
+ 114   1          DS1302_WriteData(0x8e, 0x80);   //写保护
+ 115   1              EA = 1;
+ 116   1      }
+C51 COMPILER V9.01   DS1302                                                                05/20/2012 21:50:09 PAGE 3   
+
+ 117          
+ 118          /**************************************
+ 119          读取当前时间
+ 120          **************************************/
+ 121          void DS1302_GetTime(uint8 *p)
+ 122          {
+ 123   1          uint8 addr = 0x81;
+ 124   1          uint8 n = 7;
+ 125   1      
+ 126   1         EA = 0;
+ 127   1          while (n--)
+ 128   1          {
+ 129   2              *p++ = DS1302_ReadData(addr);
+ 130   2              addr += 2;
+ 131   2          }
+ 132   1              EA = 1;
+ 133   1      }
+ 134          
+ 135          /**************************************
+ 136          初始化DS1302
+ 137          **************************************/
+ 138          void DS1302_Initial()
+ 139          {
+ 140   1          RST = 0;
+ 141   1          SCLK = 0;
+ 142   1          DS1302_WriteData(0x8e, 0x00);   //允许写操作
+ 143   1      //    DS1302_WriteData(0x80, 0x00);   //时钟启动
+ 144   1          DS1302_WriteData(0x90, 0xa6);   //一个二极管＋4K电阻充电
+ 145   1          DS1302_WriteData(0x8e, 0x80);   //写保护
+ 146   1      }
+ 147          
+ 148          /**************************************
+ 149          将BCD码转换成十进制
+ 150          **************************************/
+ 151          uint8 bcdtol(uint8 bcd)
+ 152          {
+ 153   1              uint8 tmp;
+ 154   1      
+ 155   1              tmp = (bcd / 16) * 10 + (bcd % 16);
+ 156   1      
+ 157   1              return tmp;
+ 158   1      }
+ 159          
+ 160          /**************************************
+ 161          将十进制码转换成BCD
+ 162          **************************************/
+ 163          uint8 ltobcd(uint8 l)
+ 164          {
+ 165   1              uint8 tmp;
+ 166   1      
+ 167   1              tmp = (l / 10) * 16 + (l % 10);
+ 168   1      
+ 169   1              return tmp;
+ 170   1      }
+ 171          
+ 172          uint8 *bcdtols(uint8 *s, uint8 len)
+ 173          {
+ 174   1              uint8 i;
+ 175   1              
+ 176   1              for (i = 0; i < len; i++)
+ 177   1              {
+ 178   2                      s[i] = bcdtol(s[i]);
+C51 COMPILER V9.01   DS1302                                                                05/20/2012 21:50:09 PAGE 4   
+
+ 179   2              }               
+ 180   1              
+ 181   1              return s;
+ 182   1      }
+ 183          
+ 184          uint8 *ltobcds(uint8 *s, uint8 len)
+ 185          {
+ 186   1              uint8 i;
+ 187   1              
+ 188   1              for (i = 0; i < len; i++)
+ 189   1              {
+ 190   2                      s[i] = ltobcd(s[i]);
+ 191   2              }               
+ 192   1              
+ 193   1              return s;       
+ 194   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    376    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----      13
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

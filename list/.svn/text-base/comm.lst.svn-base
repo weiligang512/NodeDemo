@@ -1,0 +1,275 @@
+C51 COMPILER V9.01   COMM                                                                  05/20/2012 23:29:36 PAGE 1   
+
+
+C51 COMPILER V9.01, COMPILATION OF MODULE COMM
+OBJECT MODULE PLACED IN .\obj\comm.obj
+COMPILER INVOKED BY: C:\Keil\C51\BIN\C51.EXE src\comm.c WARNINGLEVEL(0) BROWSE INCDIR(.\inc) DEBUG OBJECTEXTEND PRINT(.\
+                    -list\comm.lst) OBJECT(.\obj\comm.obj)
+
+line level    source
+
+   1          #include "STC_NEW_8051.H"
+   2          #include "comm.h"
+   3          #include "type.h"
+   4          #include "config.h"
+   5          #include "cpu.h"
+   6          #include "uart.h"
+   7          #include "control.h"
+   8          #include "ds1302.h"
+   9          #include "DHT11.h"
+  10          #include "irda.h"
+  11          
+  12          
+  13          
+  14          extern uint8 xdata CommReciveBuff[COMMRECIVEBUFFLEN];
+  15          extern uint8 xdata CommSendBuff[COMMSENDBUFFLEN];
+  16          
+  17          extern volatile int8 CommReciveSuccess;
+  18          
+  19          extern SysParameter_Tyep SysParatmeter;
+  20          
+  21          /********************CRC校验*************************/
+  22          const uint8 code auchCRCHi[] =
+  23          {
+  24                  0x00,0xc1,0x81,0x40,0x01,0xc0,0x80,0x41,0x01,0xc0,
+  25                  0x80,0x41,0x00,0xc1,0x81,0x40,0x01,0xc0,0x80,0x41,
+  26                  0x00,0xc1,0x81,0x40,0x00,0xc1,0x81,0x40,0x01,0xc0,
+  27                  0x80,0x41,0x01,0xc0,0x80,0x41,0x00,0xc1,0x81,0x40,
+  28                  0x00,0xc1,0x81,0x40,0x01,0xc0,0x80,0x41,0x00,0xc1,
+  29                  0x81,0x40,0x01,0xc0,0x80,0x41,0x01,0xc0,0x80,0x41,
+  30                  0x00,0xc1,0x81,0x40,0x01,0xc0,0x80,0x41,0x00,0xc1,
+  31                  0x81,0x40,0x00,0xc1,0x81,0x40,0x01,0xc0,0x80,0x41,
+  32                  0x00,0xc1,0x81,0x40,0x01,0xc0,0x80,0x41,0x01,0xc0,
+  33                  0x80,0x41,0x00,0xc1,0x81,0x40,0x00,0xc1,0x81,0x40,
+  34                  0x01,0xc0,0x80,0x41,0x01,0xc0,0x80,0x41,0x00,0xc1,
+  35                  0x81,0x40,0x01,0xc0,0x80,0x41,0x00,0xc1,0x81,0x40,
+  36                  0x00,0xc1,0x81,0x40,0x01,0xc0,0x80,0x41,0x01,0xc0,
+  37                  0x80,0x41,0x00,0xc1,0x81,0x40,0x00,0xc1,0x81,0x40,
+  38                  0x01,0xc0,0x80,0x41,0x00,0xc1,0x81,0x40,0x01,0xc0,
+  39                  0x80,0x41,0x01,0xc0,0x80,0x41,0x00,0xc1,0x81,0x40,
+  40                  0x00,0xc1,0x81,0x40,0x01,0xc0,0x80,0x41,0x01,0xc0,
+  41                  0x80,0x41,0x00,0xc1,0x81,0x40,0x01,0xc0,0x80,0x41,
+  42                  0x00,0xc1,0x81,0x40,0x00,0xc1,0x81,0x40,0x01,0xc0,
+  43                  0x80,0x41,0x00,0xc1,0x81,0x40,0x01,0xc0,0x80,0x41,
+  44                  0x01,0xc0,0x80,0x41,0x00,0xc1,0x81,0x40,0x01,0xc0,
+  45                  0x80,0x41,0x00,0xc1,0x81,0x40,0x00,0xc1,0x81,0x40,
+  46                  0x01,0xc0,0x80,0x41,0x01,0xc0,0x80,0x41,0x00,0xc1,
+  47                  0x81,0x40,0x00,0xc1,0x81,0x40,0x01,0xc0,0x80,0x41,      
+  48                  0x00,0xc1,0x81,0x40,0x01,0xc0,0x80,0x41,0x01,0xc0,
+  49                  0x80,0x41,0x00,0xc1,0x81,0x40
+  50          };
+  51          
+  52          const uint8 code auchCRCLo[] = {
+  53                  0x00,0xc0,0xc1,0x01,0xc3,0x03,0x02,0xc2,0xc6,0x06,
+  54                  0x07,0xc7,0x05,0xc5,0xc4,0x04,0xcc,0x0c,0x0d,0xcd,
+C51 COMPILER V9.01   COMM                                                                  05/20/2012 23:29:36 PAGE 2   
+
+  55                  0x0f,0xcf,0xce,0x0e,0x0a,0xca,0xcb,0x0b,0xc9,0x09,
+  56                  0x08,0xc8,0xd8,0x18,0x19,0xd9,0x1b,0xdb,0xda,0x1a,
+  57                  0x1e,0xde,0xdf,0x1f,0xdd,0x1d,0x1c,0xdc,0x14,0xd4,
+  58                  0xd5,0x15,0xd7,0x17,0x16,0xd6,0xd2,0x12,0x13,0xd3,
+  59                  0x11,0xd1,0xd0,0x10,0xf0,0x30,0x31,0xf1,0x33,0xf3,
+  60                  0xf2,0x32,0x36,0xf6,0xf7,0x37,0xf5,0x35,0x34,0xf4,
+  61                  0x3c,0xfc,0xfd,0x3d,0xff,0x3f,0x3e,0xfe,0xfa,0x3a,
+  62                  0x3b,0xfb,0x39,0xf9,0xf8,0x38,0x28,0xe8,0xe9,0x29,
+  63                  0xeb,0x2b,0x2a,0xea,0xee,0x2e,0x2f,0xef,0x2d,0xed,
+  64                  0xec,0x2c,0xe4,0x24,0x25,0xe5,0x27,0xe7,0xe6,0x26,
+  65                  0x22,0xe2,0xe3,0x23,0xe1,0x21,0x20,0xe0,0xa0,0x60,
+  66                  0x61,0xa1,0x63,0xa3,0xa2,0x62,0x66,0xa6,0xa7,0x67,
+  67                  0xa5,0x65,0x64,0xa4,0x6c,0xac,0xad,0x6d,0xaf,0x6f,
+  68                  0x6e,0xae,0xaa,0x6a,0x6b,0xab,0x69,0xa9,0xa8,0x68,
+  69                  0x78,0xb8,0xb9,0x79,0xbb,0x7b,0x7a,0xba,0xbe,0x7e,
+  70                  0x7f,0xbf,0x7d,0xbd,0xbc,0x7c,0xb4,0x74,0x75,0xb5,
+  71                  0x77,0xb7,0xb6,0x76,0x72,0xb2,0xb3,0x73,0xb1,0x71,
+  72                  0x70,0xb0,0x50,0x90,0x91,0x51,0x93,0x53,0x52,0x92,
+  73                  0x96,0x56,0x57,0x97,0x55,0x95,0x94,0x54,0x9c,0x5c,
+  74                  0x5d,0x9d,0x5f,0x9f,0x9e,0x5e,0x5a,0x9a,0x9b,0x5b,
+  75                  0x99,0x59,0x58,0x98,0x88,0x48,0x49,0x89,0x4b,0x8b,
+  76                  0x8a,0x4a,0x4e,0x8e,0x8f,0x4f,0x8d,0x4d,0x4c,0x8c,
+  77                  0x44,0x84,0x85,0x45,0x87,0x47,0x46,0x86,0x82,0x42,
+  78                  0x43,0x83,0x41,0x81,0x80,0x40
+  79          };
+  80          /****************************************************/
+  81          
+  82          
+  83          uint16 CRC(uint8 *pData, uint16 len)
+  84          {
+  85   1              uint8  uchCRCHi = 0xff;
+  86   1              uint8  uchCRCLo = 0xff;
+  87   1              uint16 uIndex;
+  88   1              
+  89   1              while(len--)
+  90   1              {
+  91   2                      uIndex = uchCRCHi ^ *pData++;
+  92   2                      uchCRCHi = uchCRCLo ^ auchCRCHi[uIndex];
+  93   2                      uchCRCLo = auchCRCLo[uIndex];
+  94   2              }
+  95   1              return ((uchCRCHi*0x100)|uchCRCLo);
+  96   1      }
+  97          
+  98          bit CheckReciveBuff(void)
+  99          {
+ 100   1              uint8 Len;
+ 101   1              uint16 CheckOut;
+ 102   1      
+ 103   1              Len = CommReciveBuff[2] - 2;
+ 104   1      
+ 105   1              CheckOut = CRC(CommReciveBuff, Len);
+ 106   1      
+ 107   1              if ((CheckOut & 0xff) == CommReciveBuff[Len + 1] &&\
+ 108   1                      (CheckOut >> 8) == CommReciveBuff[Len])
+ 109   1              {
+ 110   2                      if ((CommReciveBuff[4] == (SysParatmeter.SysUID & 0xff)) &&\
+ 111   2                              (CommReciveBuff[3] == (SysParatmeter.SysUID >> 8)))
+ 112   2                      {
+ 113   3                              return 1;       
+ 114   3                      }
+ 115   2              }
+ 116   1              
+C51 COMPILER V9.01   COMM                                                                  05/20/2012 23:29:36 PAGE 3   
+
+ 117   1              return 0;       
+ 118   1      }
+ 119          
+ 120          void CommReturn(uint8 CMD)
+ 121          {
+ 122   1              uint8 i;
+ 123   1              uint16 CRCData;
+ 124   1      
+ 125   1              CommSendBuff[0] = COMMHEAD1;
+ 126   1              CommSendBuff[1] = COMMHEAD2;
+ 127   1              for (i = 0; i < 4; i++)
+ 128   1              {
+ 129   2                      CommSendBuff[3+i] = CommReciveBuff[3+i];
+ 130   2              }
+ 131   1      
+ 132   1              switch (CMD)
+ 133   1              {
+ 134   2                      case SETSYSPARA :
+ 135   2                              CommSendBuff[2] = SETPARALEN;
+ 136   2      
+ 137   2                      case SETTIME :
+ 138   2                              CommSendBuff[2] = SETTIMEFRAMELEN;
+ 139   2                              
+ 140   2                      break;
+ 141   2      
+ 142   2                      case READTIME :
+ 143   2                              CommSendBuff[2] = READTIMEFRAMELEN;
+ 144   2              
+ 145   2                      break;
+ 146   2      
+ 147   2                      case READTH :  //读取温湿度
+ 148   2                              CommSendBuff[2] = THFRAMELEN;
+ 149   2      
+ 150   2                      break;
+ 151   2      
+ 152   2                      case IRDASEND :
+ 153   2                              CommSendBuff[2] = IADRSENDLEN;
+ 154   2                      break;
+ 155   2      
+ 156   2                      default :
+ 157   2                      break;
+ 158   2              }
+ 159   1              CRCData = CRC(CommSendBuff, CommSendBuff[2] - 2);
+ 160   1              CommSendBuff[CommSendBuff[2]-2] = CRCData >> 8;
+ 161   1              CommSendBuff[CommSendBuff[2]-1] = CRCData & 0xff;
+ 162   1      
+ 163   1              #if !USER485
+                      Puts(CommSendBuff, CommSendBuff[2]);
+                      #else
+ 166   1              Puts485(CommSendBuff, CommSendBuff[2]);
+ 167   1              #endif
+ 168   1      }
+ 169          
+ 170          void CommCmd(void)
+ 171          {       
+ 172   1              uint8 CMD;
+ 173   1              uint8 i, sum = 0;
+ 174   1                       
+ 175   1              if (CommReciveSuccess)
+ 176   1              {
+ 177   2                      if (CheckReciveBuff())
+ 178   2                      {       
+C51 COMPILER V9.01   COMM                                                                  05/20/2012 23:29:36 PAGE 4   
+
+ 179   3                              CMD = CommReciveBuff[5];
+ 180   3                              switch (CMD)
+ 181   3                              {
+ 182   4                                      case SETSYSPARA :        //设置参数
+ 183   4                                              if (SetSysParameter(&CommReciveBuff[7]) == TRUE)
+ 184   4                                              {
+ 185   5                                                      CommSendBuff[7] = CMDSUCCESS;   
+ 186   5                                              }
+ 187   4                                              else
+ 188   4                                              {
+ 189   5                                                      CommSendBuff[7] = CMDFAILED;    
+ 190   5                                              }
+ 191   4                                              CommReturn(SETTIME);
+ 192   4                                      break;
+ 193   4      
+ 194   4                                      case SETTIME :  //设置时间
+ 195   4                                              ltobcds(&CommReciveBuff[7], TIMELEN);
+ 196   4                                              DS1302_SetTime(&CommReciveBuff[7]);
+ 197   4                                              CommSendBuff[7] = CMDSUCCESS;
+ 198   4                                              CommReturn(SETSYSPARA);
+ 199   4                                      break;
+ 200   4      
+ 201   4                                      case READTIME :  //读取时间
+ 202   4                                              DS1302_GetTime(&CommSendBuff[8]);
+ 203   4                                              bcdtols(&CommSendBuff[8], TIMELEN);
+ 204   4                                              CommSendBuff[7] = CMDSUCCESS; 
+ 205   4                                              CommReturn(READTIME);
+ 206   4                                      break;
+ 207   4      
+ 208   4                                      case READTH :  //读取温湿度
+ 209   4                                              DHT11Read((DHTst_Typ *)&CommSendBuff[8]);
+ 210   4                                              for (i = 0; i < THDATALEN - 1; i++)
+ 211   4                                              {
+ 212   5                                                      sum += CommSendBuff[8 + i];
+ 213   5                                              }
+ 214   4      
+ 215   4                                              if (sum == CommSendBuff[8 + i])
+ 216   4                                              {
+ 217   5                                                      CommSendBuff[7] = CMDSUCCESS;   
+ 218   5                                              }
+ 219   4                                              else
+ 220   4                                              {
+ 221   5                                                      CommSendBuff[7] = CMDFAILED;
+ 222   5                                              }
+ 223   4                                              CommReturn(READTH);
+ 224   4                                      break;
+ 225   4      
+ 226   4                                      case IRDASEND :
+ 227   4                                              IrDeviceSend(&CommReciveBuff[7]);
+ 228   4                                              CommSendBuff[7] = CMDSUCCESS;
+ 229   4                                              CommReturn(READTH);
+ 230   4                                      break;
+ 231   4      
+ 232   4                                      default :
+ 233   4                                      break;
+ 234   4                              }
+ 235   3                      }
+ 236   2      
+ 237   2                      CommReciveSuccess = 0;
+ 238   2                      ES = 1;
+ 239   2              }
+ 240   1      }
+C51 COMPILER V9.01   COMM                                                                  05/20/2012 23:29:36 PAGE 5   
+
+ 241          
+ 242          
+ 243          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    516    ----
+   CONSTANT SIZE    =    512    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----       7
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

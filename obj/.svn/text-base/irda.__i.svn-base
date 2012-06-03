@@ -1,0 +1,1 @@
+"src\irda.c" WARNINGLEVEL (0) BROWSE INCDIR(.\inc) DEBUG OBJECTEXTEND PRINT(.\list\irda.lst) OBJECT(.\obj\irda.obj)

@@ -1,0 +1,427 @@
+C51 COMPILER V9.01   CPU                                                                   05/21/2012 23:37:58 PAGE 1   
+
+
+C51 COMPILER V9.01, COMPILATION OF MODULE CPU
+OBJECT MODULE PLACED IN .\obj\cpu.obj
+COMPILER INVOKED BY: C:\Keil\C51\BIN\C51.EXE src\cpu.c WARNINGLEVEL(0) BROWSE INCDIR(.\inc) DEBUG OBJECTEXTEND PRINT(.\l
+                    -ist\cpu.lst) OBJECT(.\obj\cpu.obj)
+
+line level    source
+
+   1          /*stc89c52 MCU
+   2          * 晶振 ：11.0592MHz
+   3          * 波特率 ：9600
+   4          * 通讯方式 ：N81
+   5          */
+   6          
+   7          #include "STC_NEW_8051.H"
+   8          #include "type.h"
+   9          #include "cpu.h"
+  10          #include "uart.h"
+  11          #include "comm.h"
+  12          #include "ADC.h"
+  13          
+  14          
+  15          uint8 const BaudRateCode[4] = {0X70, 0XB8, 0XDC, 0XEE}; //2400, 4800, 9600, 19200 bps
+  16          
+  17          extern volatile unsigned int SysTimeBase;
+  18          extern volatile bit SysTimeFlag;
+  19          extern volatile IIrData_Typ xdata IIrData;
+  20          extern volatile uint16 data SysBase;
+  21          extern volatile uint16 data SysCount;
+  22          extern volatile bit IRFlag;
+  23          
+  24          volatile int8 CommReciveSuccess = 0;
+  25          
+  26          uint8 xdata CommReciveBuff[COMMRECIVEBUFFLEN] = {0};
+  27          uint8 xdata CommSendBuff[COMMSENDBUFFLEN] = {0};
+  28          vuint8 CommReciveCur = 0; //数据当前位置
+  29          
+  30          bit CommReciveFlag = 0;
+  31          bit ReciveStart = 0;
+  32          volatile uint16 CommReciveTimeOut = 0; 
+  33          
+  34          
+  35          /********************************************************/
+  36          /*************************串口***************************/
+  37          /********************************************************/
+  38          void SetBaudRate(uint16 BaudRate)
+  39          {
+  40   1              uint8 index;
+  41   1      
+  42   1              switch (BaudRate)
+  43   1              {
+  44   2                      case BAUDRATE2400 :
+  45   2                              index = BAUDRATEINDEX2400;
+  46   2                      break;
+  47   2                      
+  48   2                      case BAUDRATE4800 :
+  49   2                              index = BAUDRATEINDEX4800;
+  50   2                      break;
+  51   2                      
+  52   2                      case BAUDRATE9600 :
+  53   2                              index = BAUDRATEINDEX9600;
+  54   2                      break;
+C51 COMPILER V9.01   CPU                                                                   05/21/2012 23:37:58 PAGE 2   
+
+  55   2                      
+  56   2                      case BAUDRATE19200 :
+  57   2                              index = BAUDRATEINDEX19200;
+  58   2                      break;
+  59   2                      
+  60   2                      default :
+  61   2                              index = DEFAULTBAUDRATEINDEX;           
+  62   2              }
+  63   1              BRT = BaudRateCode[index];      
+  64   1      }
+  65          
+  66          static void stc_uart_init(void)
+  67          {               
+  68   1              PCON &= 0x7F;                           //波特率不倍速
+  69   1              SCON = 0x50;                            //8位数据,可变波特率
+  70   1              AUXR |= 0x04;                           //独立波特率发生器时钟为Fosc,即1T
+  71   1      //      SetBaudRate(BAUDRATE9600);              //设定独立波特率发生器重装值
+  72   1              AUXR |= 0x01;                           //串口1选择独立波特率发生器为波特率发生器
+  73   1              AUXR |= 0x10;                           //启动独立波特率发生器
+  74   1              RI = 0;
+  75   1              TI = 0;
+  76   1              ES = 1;
+  77   1      }
+  78          
+  79          void stc_uart_sendbyte(int8 cData)
+  80          {
+  81   1              SBUF = cData;
+  82   1      
+  83   1              while (!TI);    
+  84   1              
+  85   1              TI = 0;
+  86   1      }
+  87          
+  88          int8 stc_uart_getbyte(void)
+  89          {
+  90   1              REN = 1;
+  91   1      
+  92   1              while (!RI);
+  93   1              
+  94   1              RI = 0;
+  95   1              REN = 0;
+  96   1      
+  97   1              return SBUF;
+  98   1      }
+  99          
+ 100          void stc_uart_int(void) interrupt 4 using 3
+ 101          {
+ 102   1              if (TI)
+ 103   1              {
+ 104   2                      TI = 0;
+ 105   2                      return ;
+ 106   2              }
+ 107   1      
+ 108   1              if (RI)
+ 109   1              {
+ 110   2                      RI = 0;
+ 111   2                      CommReciveBuff[CommReciveCur] = SBUF;
+ 112   2                      CommReciveCur++;
+ 113   2      
+ 114   2                      CommReciveFlag = 1;
+ 115   2                      CommReciveTimeOut = 0;
+ 116   2                      if (CommReciveCur == 2)
+C51 COMPILER V9.01   CPU                                                                   05/21/2012 23:37:58 PAGE 3   
+
+ 117   2                      {
+ 118   3                              if ((CommReciveBuff[0] == COMMHEAD1) &&\
+ 119   3                                      CommReciveBuff[1] == COMMHEAD2)
+ 120   3                              {
+ 121   4                                      ReciveStart = 1;
+ 122   4                              }
+ 123   3                              else
+ 124   3                              {
+ 125   4                                      CommReciveCur = 0;
+ 126   4                              }       
+ 127   3                      }
+ 128   2                      
+ 129   2                      if (ReciveStart)
+ 130   2                      {
+ 131   3                              if (CommReciveCur == CommReciveBuff[2])
+ 132   3                              {
+ 133   4                                      CommReciveSuccess = 1;
+ 134   4                                      ReciveStart = 0;
+ 135   4                                      CommReciveCur = 0;
+ 136   4                                      ES = 0; 
+ 137   4                              }
+ 138   3                      }
+ 139   2      
+ 140   2                      CommReciveCur &= 0x1f; //接收数据为32字节
+ 141   2              }       
+ 142   1      }
+ 143          
+ 144          /********************************************************/
+ 145          
+ 146          
+ 147          /********************************************************/
+ 148          /*************************ADC***************************/
+ 149          /********************************************************/
+ 150          /*----------------------------
+ 151          Software delay function
+ 152          ----------------------------*/
+ 153          static void Delay(uint16 n)
+ 154          {
+ 155   1          uint16 x;
+ 156   1      
+ 157   1          while (n--)
+ 158   1          {
+ 159   2              x = 5000;
+ 160   2              while (x--);
+ 161   2          }
+ 162   1      }
+ 163          
+ 164          /*----------------------------
+ 165          Initial ADC sfr
+ 166          ----------------------------*/
+ 167          void InitADC(void)
+ 168          {
+ 169   1          P1ASF = ADC_CHENABLE;                   //Set all P1 as analog input port
+ 170   1              AUXR1 |= (1<<2);                                        //ADRJ=1，10 位A/D 转换结果的最高2 
+ 171   1                                                                                      //位放在ADC_RES 寄存器的低2 位, 
+ 172   1                                                                                      //低8 位放在ADC_RESL 寄存器
+ 173   1          ADC_RES = 0;                    //Clear previous result
+ 174   1              ADC_RESL = 0;
+ 175   1          ADC_CONTR = ADC_POWER | ADC_SPEEDH | ADC_START | ADC_CH;
+ 176   1              EADC = 1;                                               //enable ADC intrrupt
+ 177   1          Delay(2);                       //ADC power-on delay and Start A/D conversion
+ 178   1      }
+C51 COMPILER V9.01   CPU                                                                   05/21/2012 23:37:58 PAGE 4   
+
+ 179          
+ 180          /*----------------------------
+ 181          ADC interrupt service routine
+ 182          ----------------------------*/
+ 183          void adc_int(void) interrupt 5 
+ 184          {
+ 185   1          ADC_CONTR &= !ADC_FLAG;         //Clear ADC interrupt flag
+ 186   1              ADCHandler(ADC_RESL, ADC_RES);
+ 187   1          ADC_CONTR = ADC_POWER | ADC_SPEEDLL | ADC_START | ADC_CH;
+ 188   1      }
+ 189          
+ 190          /********************************************************/
+ 191          
+ 192          /********************************************************/
+ 193          /*************************PCA0***************************/
+ 194          /********************************************************/
+ 195          //PCA0用于捕获红外接收头脉冲宽度
+ 196          static void stc_PCA0_Init(void)
+ 197          {
+ 198   1              CCON = 0x00;
+ 199   1              CMOD = 0x00;            //设PCA时钟位系统1/12
+ 200   1              CCAPM0 = 0x31;     //16位捕获模式，下，上降沿触发 ,允许中断
+ 201   1              CL = 0x00;
+ 202   1              CH = 0x00;
+ 203   1              CCAP0L = 0x00;
+ 204   1              CCAP0H = 0x00;
+ 205   1              CR = 1;                         //启动PCA
+ 206   1      }
+ 207          
+ 208          //PCA1用于产生38K脉冲，用于发送红外码
+ 209          void stc_PCA1_Init(void)
+ 210          {
+ 211   1              CCON = 0X00;
+ 212   1              CMOD = 0X08;    //设PCA时钟位系统
+ 213   1              CCAPM1 = 0x00;  //设置为高速脉冲输出模式 ，关闭比较位
+ 214   1              CL = 0X00;
+ 215   1              CH = 0X00;
+ 216   1              CCAP1L = 0X41;  //设置为频率38k，f=SYSclk/12*2*CCAP1;
+ 217   1              CCAP1H = 0X00;
+ 218   1              CR = 1;         //启动PCA计数
+ 219   1              P1M0 = 0x10;
+ 220   1              P1M1 = 0x00;
+ 221   1              IR = 1;                 //红外发射为1
+ 222   1      }
+ 223          /********************************************************/
+ 224          
+ 225          
+ 226          /********************************************************/
+ 227          /*************************定时器0************************/
+ 228          /********************************************************/
+ 229          void stc_time0_init(void)  //50ms微秒@11.0592MHz
+ 230          {
+ 231   1              AUXR &= 0x7F;           //定时器时钟12T模式
+ 232   1              TMOD &= 0xF0;           //设置定时器模式
+ 233   1              TMOD |= 0x01;           //设置定时器模式
+ 234   1              TL0 = 0x00;             //设置定时初值
+ 235   1              TH0 = 0x4C;             //设置定时初值
+ 236   1              TF0 = 0;                //清除TF0标志
+ 237   1              TR0 = 1;                //定时器0开始计时
+ 238   1              ET0=1;                  //开中断
+ 239   1              TR0 = 1;                //定时器0开始计时
+ 240   1      }
+C51 COMPILER V9.01   CPU                                                                   05/21/2012 23:37:58 PAGE 5   
+
+ 241          
+ 242          void stc_time0_int(void) interrupt 1 using 1
+ 243          {
+ 244   1              TF0 = 0;
+ 245   1              TL0 = 0x00;             //设置定时初值
+ 246   1              TH0 = 0x4C;             //设置定时初值
+ 247   1              SysTimeBase++;
+ 248   1              if (SysTimeBase >= SYSTIMEBASEMAX)
+ 249   1              {
+ 250   2                      SysTimeFlag = 1;
+ 251   2                      SysTimeBase = 0;
+ 252   2              }
+ 253   1      
+ 254   1              if (CommReciveFlag)
+ 255   1              {
+ 256   2                      CommReciveTimeOut++;
+ 257   2                      if (COMMRECIVETIMROUT <= CommReciveTimeOut)
+ 258   2                      {
+ 259   3                              CommReciveFlag = 0;
+ 260   3                              CommReciveCur = 0;
+ 261   3                              ReciveStart = 0;
+ 262   3                              CommReciveSuccess = 0;
+ 263   3                      }       
+ 264   2              }
+ 265   1      }
+ 266          /********************************************************/
+ 267          
+ 268          
+ 269          /********************************************************/
+ 270          /*************************外部中断0**********************/
+ 271          /********************************************************/
+ 272          #if 0
+              void stc_exti0_init(void)
+              {
+              //      IT0 = 1;   //指定外部中断0下降沿触发，INT0 (P3.2)
+              //      EX0 = 1;   //使能外部中断
+              //      EA = 1;    //开总中断
+              }
+              
+              void stc_exti0_handler(void)  interrupt 0 using 0
+              {
+              
+              
+              }
+              
+              void stc_exti1_int(void)        interrupt 2 using 2
+              {
+              
+              }
+              #endif
+ 291          
+ 292          /*****************************************************************
+ 293          *FunctionName   : stc_PCA_int(void) interrupt 7
+ 294          *Description    : System Parameter Initialize
+ 295          *EntryParameter : None
+ 296          *ReturnValue    : None
+ 297          *****************************************************************/
+ 298          void stc_PCA_int(void) interrupt 7
+ 299          {
+ 300   1              static unsigned char start = 0;
+ 301   1              static unsigned char i = 0;
+ 302   1              static unsigned char heard = 0;
+C51 COMPILER V9.01   CPU                                                                   05/21/2012 23:37:58 PAGE 6   
+
+ 303   1              unsigned int uiTmpData;
+ 304   1      
+ 305   1              if (CCF1)
+ 306   1              {
+ 307   2                      CCF1 = 0;
+ 308   2                      CL = 0;
+ 309   2                      CH = 0;
+ 310   2      
+ 311   2                      return;
+ 312   2              }
+ 313   1      
+ 314   1              if (CCF0)
+ 315   1              {
+ 316   2                      CCF0 = 0;
+ 317   2                      uiTmpData = (unsigned int)CCAP0L + ((unsigned int)CCAP0H << 8);
+ 318   2                  IIrData.uiIrHeard[heard] = uiTmpData;
+ 319   2                      CL = 0;
+ 320   2                      CH = 0;
+ 321   2              
+ 322   2                      if (IIrData.uiIrHeard[heard] >8000 && IIrData.uiIrHeard[heard] < 8500)
+ 323   2                      {
+ 324   3                              heard++;
+ 325   3                              start = 0;
+ 326   3              
+ 327   3                              return;
+ 328   3                      }
+ 329   2                      if (heard)
+ 330   2                      {
+ 331   3                              if (IIrData.uiIrHeard[heard] >3800 && IIrData.uiIrHeard[heard] < 4400)
+ 332   3                              {
+ 333   4                                      start = 1;
+ 334   4                                      i = 0;
+ 335   4                                      heard = 0;
+ 336   4                      
+ 337   4                                      return;
+ 338   4                              }
+ 339   3                      }
+ 340   2                      
+ 341   2                      if (!start)
+ 342   2                      {
+ 343   3                              if (!heard)
+ 344   3                              {
+ 345   4                                      heard = 0;
+ 346   4                              }
+ 347   3                              else
+ 348   3                              {
+ 349   4                                      heard++;
+ 350   4                              }
+ 351   3              
+ 352   3                              return;
+ 353   3                      }
+ 354   2              
+ 355   2                      if (start)
+ 356   2                      {
+ 357   3                              IIrData.uiIrData[i] = uiTmpData;
+ 358   3                              
+ 359   3                              i++;
+ 360   3                              if (i > 136)
+ 361   3                              {
+ 362   4                              //      prints("d");
+ 363   4                                      i = 0;
+ 364   4                                      start = 0;
+C51 COMPILER V9.01   CPU                                                                   05/21/2012 23:37:58 PAGE 7   
+
+ 365   4                                      IIrData.FrameOK = 1;
+ 366   4                              }
+ 367   3                      }
+ 368   2              }
+ 369   1      }
+ 370          
+ 371          /********************************************************/
+ 372          
+ 373          /********************************************************/
+ 374          void CPUInit(void)
+ 375          {
+ 376   1              CLK_DIV = 0x00;
+ 377   1              stc_uart_init();
+ 378   1              stc_time0_init();
+ 379   1              stc_PCA1_Init();
+ 380   1              stc_PCA0_Init();
+ 381   1              InitADC();
+ 382   1              EA = 1;
+ 383   1      }
+ 384          
+ 385          void sys_handler(void)
+ 386          {
+ 387   1              SysTimeFlag = 0;
+ 388   1      }
+ 389          
+ 390          
+ 391          /********************************************************/
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    779    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =     64    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     11    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      2    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
